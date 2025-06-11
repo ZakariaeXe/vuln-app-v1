@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>XML Processor (XXE Vulnerable)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); max-width: 800px; margin: auto; }
+        h1, h2 { color: #333; }
+        textarea { width: 100%; height: 200px; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .error { color: red; font-weight: bold; }
+        .result { background-color: #e9f7ef; border-left: 5px solid #28a745; padding: 10px; margin-top: 20px; border-radius: 5px; }
+        /* Navigation Bar Styles (copiez-les depuis vos autres templates) */
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .navbar ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+        .navbar li {
+            float: left;
+        }
+        .navbar li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+        .navbar li a:hover {
+            background-color: #575757;
+        }
+    </style>
+</head>
+<body>
+<div class="navbar">
+    <ul>
+        <li><a th:href="@{/}">Home</a></li>
+        <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
+        <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{'/profile/' + ${session.user.id}}">Profile</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/search}">Search Users</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/xml-process}">XML Processor</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/fetch-url}">URL Fetcher</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/logout}">Logout</a>
+        </li>
+    </ul>
+</div>
+
+<div class="container">
+    <h1>XML Data Processor (XXE Vulnerable)</h1>
+    <p>Soumettez du contenu XML pour traitement. Cette fonctionnalité est vulnérable aux attaques XXE.</p>
+    <form id="xmlForm">
+        <textarea id="xmlData" name="xmlData" placeholder="Entrez le XML ici..."></textarea><br>
+        <button type="submit">Process XML</button>
+    </form>
+
+    <p th:if="${error}" class="error" th:text="${error}"></p>
+    <div th:if="${result}" class="result">
+        <h2>Résultat du Traitement :</h2>
+        <div th:utext="${result}"></div>
+    </div>
+
+    <h3>Exemple de Payload XXE (pour lire /etc/passwd sur Linux ou C:\Windows\win.ini sur Windows) :</h3>
+    <pre>&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE foo [
+    &lt;!ELEMENT foo ANY &gt;
+    &lt;!ENTITY xxe SYSTEM "file:///C:/temp/xxe_test.txt" &gt;
+]&gt;
+&lt;foo&gt;&lt;content&gt;&amp;xxe;&lt;/content&gt;&lt;/foo&gt;</pre>
+    <p>Soumettez ce XML pour potentiellement voir le contenu du fichier dans le résultat.</p>
+</div>
+
+<script>
+    document.getElementById('xmlForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Empêche la soumission de formulaire par défaut du navigateur
+
+        const xmlContent = document.getElementById('xmlData').value;
+        const url = this.action || '/xml-process'; // Utilise l'attribut action du formulaire ou par défaut
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/xml' // DÉFINIT L'EN-TÊTE CORRECT POUR SPRING
+            },
+            body: xmlContent // Envoie le contenu brut du textarea comme corps de la requête
+        })
+            .then(response => {
+                // Vérifie si la réponse est bien HTML (attendu de Thymeleaf)
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    return response.text(); // Récupère la réponse en tant que texte (HTML)
+                } else {
+                    // Gère les réponses non-HTML si nécessaire
+                    return response.text().then(text => Promise.reject(new Error(`Type de réponse inattendu: ${contentType || 'aucun'}. Contenu: ${text}`)));
+                }
+            })
+            .then(htmlResponse => {
+                // Remplace le contenu du conteneur actuel par le nouveau contenu HTML de la réponse
+                // C'est une manière simple de mettre à jour la page côté client
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlResponse, 'text/html');
+                const newContainer = doc.querySelector('.container');
+                const oldContainer = document.querySelector('.container');
+                if (newContainer && oldContainer) {
+                    oldContainer.innerHTML = newContainer.innerHTML; // Remplace le contenu du conteneur principal
+
+                    // Met également à jour spécifiquement les éléments d'erreur/résultat
+                    const newError = doc.querySelector('p.error');
+                    const oldError = document.querySelector('p.error');
+                    if (newError && oldError) { oldError.outerHTML = newError.outerHTML; }
+                    else if (oldError) { oldError.remove(); }
+                    else if (newError) { document.querySelector('form').insertAdjacentElement('afterend', newError); } // Ajoute après le formulaire si nouveau
+
+                    const newResult = doc.querySelector('div.result');
+                    const oldResult = document.querySelector('div.result');
+                    if (newResult && oldResult) { oldResult.outerHTML = newResult.outerHTML; }
+                    else if (oldResult) { oldResult.remove(); }
+                    else if (newResult) {
+                        // Positionne le résultat après l'erreur s'il y en a une, sinon après le formulaire
+                        const refElement = document.querySelector('p.error') || document.querySelector('form');
+                        if (refElement) {
+                            refElement.insertAdjacentElement('afterend', newResult);
+                        } else {
+                            // Fallback si ni erreur ni formulaire pour insertion
+                            document.body.appendChild(newResult);
+                        }
+                    }
+
+                } else {
+                    console.error("Impossible de mettre à jour le conteneur, rechargement de la page.");
+                    window.location.reload(); // Rechargement simple en dernier recours
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors du fetch :', error);
+                const errorElement = document.querySelector('p.error');
+                if (errorElement) {
+                    errorElement.textContent = `Erreur de traitement XML: ${error.message}`;
+                } else {
+                    alert(`Erreur de traitement XML: ${error.message}`);
+                }
+            });
+    });
+</script>
+</body>
+</html>

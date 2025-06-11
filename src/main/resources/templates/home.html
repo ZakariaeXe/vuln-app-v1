@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); max-width: 800px; margin: auto; }
+        h1, h2 { color: #333; text-align: center; }
+        p { color: #555; text-align: center; line-height: 1.6; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .call-to-action { margin-top: 30px; }
+        .dashboard-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: left; }
+
+        /* Navigation Bar Styles (copy-pasted for consistency) */
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .navbar ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+        .navbar li {
+            float: left;
+        }
+        .navbar li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+        .navbar li a:hover {
+            background-color: #575757;
+        }
+    </style>
+</head>
+<body>
+<div class="navbar">
+    <ul>
+        <li><a th:href="@{/}">Home</a></li>
+        <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
+        <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
+
+        <li th:if="${session.user != null}">
+            <a th:href="@{'/profile/' + ${session.user.id}}">Profile</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/search}">Search Users</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/xml-process}">XML Processor</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/fetch-url}">URL Fetcher</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/logout}">Logout</a>
+        </li>
+    </ul>
+</div>
+
+<div class="container">
+    <h1 th:text="${welcomeMessage}">Welcome!</h1>
+
+    <div th:if="${!loggedIn}" class="call-to-action">
+        <p>This is a vulnerable application designed for security learning and testing purposes.</p>
+        <p>It contains various web application vulnerabilities such as SQL Injection, XSS, and IDOR.</p>
+        <p th:text="${callToAction}"></p>
+        <p>
+            <a th:href="@{/login}">Login</a> |
+            <a th:href="@{/register}">Register</a>
+        </p>
+    </div>
+
+    <div th:if="${loggedIn}" class="dashboard-section">
+        <h2>Your Dashboard</h2>
+        <p th:text="${dashboardInfo}"></p>
+        <p>Explore your <a th:href="@{'/profile/' + ${userId}}">Profile</a> or <a th:href="@{/search}">Search</a> for other users.</p>
+        <p><em>Security Tip:</em> <span th:text="${securityTip}"></span></p>
+    </div>
+</div>
+</body>
+</html>
