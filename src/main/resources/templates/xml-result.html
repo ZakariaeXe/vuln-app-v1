@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Search Photos</title>
+    <title>XML Processing Result</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 <body>
@@ -20,19 +20,19 @@
 </div>
 
 <div class="container">
-    <h1>Search Photos</h1>
-    <form th:action="@{/search}" method="get">
-        <input type="text" name="query" th:value="${query}" placeholder="Filename contains..." />
-        <button type="submit">Search</button>
-    </form>
-    <div th:if="${error}" class="error" th:text="${error}"></div>
-    <ul>
-        <li th:each="photo : ${results}">
-            <a th:href="@{'/photo/' + ${photo.id}}" th:text="${photo.filename}" class="photo-link"></a>
-            <div class="description" th:utext="${photo.description}"></div>
-        </li>
-    </ul>
-    <a th:href="@{/search-union(query=${query})}" class="union-link">Try UNION-based SQLi</a>
+    <h1>XML Processing Result</h1>
+
+    <!-- Show the XML processing result -->
+    <div th:if="${result}" class="result">
+        <div th:utext="${result}"></div>
+    </div>
+    <div th:unless="${result}">
+        <p>Aucun résultat de traitement XML n'est disponible ou le traitement n'a pas produit de contenu affichable.</p>
+        <p>Cela peut se produire si le XML soumis ne contient pas de balises `&lt;title&gt;` ou si une erreur s'est produite.</p>
+        <p>Vérifiez le XML que vous avez soumis ou le log de l'application pour plus de détails.</p>
+    </div>
+
+    <p><a th:href="@{/upload}">Go back to Upload Page</a></p>
 </div>
 </body>
 </html>

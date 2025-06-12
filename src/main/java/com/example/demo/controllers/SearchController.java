@@ -1,62 +1,79 @@
 package com.example.demo.controllers;
 
-
+import com.example.demo.models.Photo;
 import com.example.demo.models.User;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
-import javax.sql.DataSource; // Use javax.sql for DataSource
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import javax.sql.DataSource;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Controller
 public class SearchController {
-
     @Autowired
-    private DataSource dataSource; // Inject DataSource for raw JDBC operations
+    private DataSource dataSource;
 
+    // Classic SQLi variant
     @GetMapping("/search")
-    public String search(@RequestParam(name = "query", required = false) String query,
-                         Model model, HttpSession session) {
-
-        // Basic authentication check
+    public String search(
+            @RequestParam(name = "query", required = false) String q,
+            Model model,
+            HttpSession session
+    ) {
+        if (session.getAttribute("user") == null) return "redirect:/login";
         User currentUser = (User) session.getAttribute("user");
-        if (currentUser == null) {
-            return "redirect:/login";
-        }
 
-        List<User> searchResults = new ArrayList<>();
-        if (query != null && !query.trim().isEmpty()) {
-            // SQL Injection Vulnerability: Direct string concatenation of 'query' into SQL
-            String sql = "SELECT id, username, email, password FROM user WHERE username LIKE '%" + query + "%'";
+        List<Photo> res = new ArrayList<>();
+        if (q != null && !q.isBlank()) {
+//            String sql = "SELECT id,owner_id,filename,description,url FROM photo WHERE filename LIKE '%" + q + "%'";
+            String sql = "SELECT id, filename, description, url, owner_id FROM photo WHERE owner_id = "
+                    + currentUser.getId() + " AND filename LIKE '%" + q + "%'";
 
-            try (Connection connection = dataSource.getConnection();
-                 Statement statement = connection.createStatement(); // Using Statement instead of PreparedStatement
-                 ResultSet resultSet = statement.executeQuery(sql)) {
-
-                while (resultSet.next()) {
-                    User user = new User();
-                    user.setId(resultSet.getLong("id"));
-                    user.setUsername(resultSet.getString("username"));
-                    user.setEmail(resultSet.getString("email"));
-                    user.setPassword(resultSet.getString("password")); // Fetching password for demonstration (highly insecure!)
-                    searchResults.add(user);
+            try (Connection c = dataSource.getConnection(); Statement s = c.createStatement(); ResultSet rs = s.executeQuery(sql)) {
+                while (rs.next()) {
+                    Photo p = new Photo();
+                    p.setId(rs.getLong("id"));
+                    p.setOwnerId(rs.getLong("owner_id"));
+                    p.setFilename(rs.getString("filename"));
+                    p.setDescription(rs.getString("description"));
+                    p.setUrl(rs.getString("url"));
+                    res.add(p);
                 }
             } catch (SQLException e) {
-                model.addAttribute("error", "Database error: " + e.getMessage());
-                // In a real app, log the full exception: e.printStackTrace();
+                model.addAttribute("error", "Search error: " + e.getMessage());
             }
         }
-        model.addAttribute("query", query);
-        model.addAttribute("searchResults", searchResults);
+        model.addAttribute("query", q);
+        model.addAttribute("results", res);
         return "search";
+    }
+
+    // UNION-based SQLi variant
+    @GetMapping("/search-union")
+    public String searchUnion(
+            @RequestParam(name = "query", required = false) String q,
+            Model model,
+            HttpSession session
+    ) {
+        if (session.getAttribute("user") == null) return "redirect:/login";
+
+        List<String> rows = new ArrayList<>();
+        if (q != null && !q.isBlank()) {
+            String sql = "SELECT filename FROM photo WHERE filename LIKE '%" + q + "%' "
+                    + "UNION SELECT username FROM user--";
+            try (Connection c = dataSource.getConnection(); Statement s = c.createStatement(); ResultSet rs = s.executeQuery(sql)) {
+                while (rs.next()) rows.add(rs.getString(1));
+            } catch (SQLException e) {
+                model.addAttribute("error", "Union search error: " + e.getMessage());
+            }
+        }
+        model.addAttribute("query", q);
+        model.addAttribute("rows", rows);
+        return "search-union";
     }
 }

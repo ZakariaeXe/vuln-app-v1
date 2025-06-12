@@ -1,0 +1,149 @@
+<!--<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Fetch External URL</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div class="navbar">
+  <ul>
+    <li><a th:href="@{/}">Home</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
+  </ul>
+</div>
+
+<div class="container">
+  <h1>Fetch External URL</h1>
+  <form th:action="@{/fetch-action}" method="get">
+    <input type="text" name="url" th:value="${url}" placeholder="Enter URL..." />
+    <button type="submit">Fetch</button>
+  </form>
+  <div th:if="${error}" class="error" th:text="${error}"></div>
+  <div th:if="${result}" class="result" th:utext="${result}"></div>
+</div>
+</body>
+</html>
+
+-->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Fetch External URL (SSRF Vulnerable)</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div class="navbar">
+  <ul>
+    <li><a th:href="@{/}">Home</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch URL (SSRF)</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/xml-process}">XML Processor</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/fetch-url}">URL Fetcher (Old)</a></li> <li th:if="${session.user != null}"><a th:href="@{/echo}">Echo Page (Reflected XSS)</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/dom-xss}">DOM XSS Page</a></li>
+  </ul>
+</div>
+
+<div class="container">
+  <h1>Fetch External URL (SSRF Vulnerable)</h1>
+  <p>Cette page démontre la SSRF en récupérant du contenu à partir d'une URL fournie par l'utilisateur.</p>
+
+  <h2>Récupérer du Contenu Texte</h2>
+  <form th:action="@{/fetch-action}" method="get">
+    URL: <input type="text" name="url" th:value="${url}" placeholder="ex: http://localhost:8080/" /><br>
+    <button type="submit">Récupérer Texte</button>
+  </form>
+  <div th:if="${error}" class="error" th:text="${error}"></div>
+  <div th:if="${result}" class="result" th:utext="${result}"></div>
+
+  <hr/>
+
+  <h2>Récupérer une Image (Proxy d'Image SSRF)</h2>
+  <p>Essayez de récupérer une image depuis une URL publique (ex: <code>https://via.placeholder.com/150</code>) ou une URL interne (ex: <code>http://localhost:8080/image-qui-existe.png</code> si vous en avez une).</p>
+  <form id="imageFetchForm" method="get">
+    URL de l'Image: <input type="text" id="imageUrlInput" name="imageUrl" placeholder="ex: https://via.placeholder.com/150" /><br>
+    <button type="submit">Récupérer Image</button>
+  </form>
+  <div th:if="${imageError}" class="error" th:text="${imageError}"></div>
+  <div class="image-display">
+    <img id="fetchedImage" src="" alt="Image Récupérée" style="display:none;" />
+    <p id="imagePlaceholder" style="display:block;">Aucune image récupérée pour le moment.</p>
+  </div>
+</div>
+
+<script>
+  // JavaScript pour le formulaire de Proxy d'Image
+  document.getElementById('imageFetchForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Empêche la soumission de formulaire par défaut
+
+    const imageUrl = document.getElementById('imageUrlInput').value;
+    const imageEndpoint = '/fetch-image'; // C'est le nouveau point de terminaison pour l'image
+
+    const fetchedImage = document.getElementById('fetchedImage');
+    const imagePlaceholder = document.getElementById('imagePlaceholder');
+    // Un sélecteur plus précis pour l'erreur de l'image si besoin, sinon p.error par défaut
+    const imageErrorDiv = document.querySelector('.image-display + .error');
+
+    // Nettoyer l'état précédent
+    fetchedImage.style.display = 'none';
+    fetchedImage.src = '';
+    imagePlaceholder.style.display = 'block';
+    if (imageErrorDiv) imageErrorDiv.textContent = ''; // Nettoyer le message d'erreur
+
+    if (!imageUrl) {
+      if (imageErrorDiv) imageErrorDiv.textContent = 'Veuillez entrer une URL d\'image.';
+      return;
+    }
+
+    // Faire une requête AJAX vers le point de terminaison /fetch-image
+    fetch(`${imageEndpoint}?imageUrl=${encodeURIComponent(imageUrl)}`, {
+      method: 'GET' // La méthode est GET car c'est un @GetMapping dans le contrôleur
+    })
+            .then(response => {
+              if (!response.ok) {
+                // Si la réponse n'est pas OK (ex: 400, 401, 500), tenter de lire le message d'erreur comme texte
+                return response.text().then(text => {
+                  throw new Error(`Le serveur a répondu avec le statut ${response.status}: ${text || response.statusText}`);
+                });
+              }
+              // Si la réponse est OK, récupérer le blob et déterminer le type de contenu
+              const contentType = response.headers.get('Content-Type');
+              if (contentType && contentType.startsWith('image/')) {
+                return response.blob(); // Récupérer la réponse en tant que Blob pour l'image
+              } else {
+                return response.text().then(text => {
+                  throw new Error(`Image attendue, mais reçu ${contentType || 'inconnu'}. Contenu: ${text.substring(0, 200)}...`);
+                });
+              }
+            })
+            .then(blob => {
+              const objectURL = URL.createObjectURL(blob);
+              fetchedImage.src = objectURL;
+              fetchedImage.style.display = 'block';
+              imagePlaceholder.style.display = 'none';
+
+              // Nettoyer l'URL de l'objet lorsque l'image est chargée (optionnel, bonne pratique)
+              fetchedImage.onload = () => URL.revokeObjectURL(objectURL);
+            })
+            .catch(error => {
+              console.error('Erreur de récupération d\'image :', error);
+              if (imageErrorDiv) {
+                imageErrorDiv.textContent = 'Erreur de récupération d\'image : ' + error.message;
+              }
+              fetchedImage.style.display = 'none';
+              imagePlaceholder.style.display = 'block';
+            });
+  });
+</script>

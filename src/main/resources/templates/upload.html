@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Photo</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div class="navbar">
+  <ul>
+    <li><a th:href="@{/}">Home</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
+  </ul>
+</div>
+
+<div class="container">
+  <h1>Upload Photo</h1>
+  <div th:if="${error}" class="error" th:text="${error}"></div>
+  <form th:action="@{/upload}" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" />
+    <textarea name="description" placeholder="Description"></textarea>
+    <input type="text" name="url" placeholder="External URL (optional)" />
+    <button type="submit">Upload</button>
+  </form>
+  <hr />
+  <h2>Upload XML (XXE Demo)</h2>
+  <form id="xmlUploadForm" th:action="@{/upload-xml}" method="post">
+    <textarea id="xmlContent" name="xml" rows="8" placeholder="Paste XML here..."></textarea>
+    <button type="submit">Process XML</button>
+  </form>
+  <div th:if="${result}" class="result" th:utext="${result}"></div>
+</div>
+
+<script>
+  document.getElementById('xmlUploadForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Empêche la soumission de formulaire par défaut du navigateur
+
+    const xmlData = document.getElementById('xmlContent').value;
+    const url = this.action; // Récupère l'URL d'action du formulaire
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/xml' // DÉFINIT L'EN-TÊTE CORRECT POUR SPRING
+      },
+      body: xmlData // Envoie le contenu brut du textarea comme corps de la requête
+    })
+            .then(response => {
+              // Le contrôleur renvoie maintenant directement la page 'upload.html'
+              // avec le résultat dans le modèle. Nous allons extraire le HTML et
+              // mettre à jour les divs pertinentes.
+              return response.text(); // Récupère le HTML complet de la page mise à jour
+            })
+            .then(html => {
+              // Crée un document DOM temporaire pour extraire les parties mises à jour
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, 'text/html');
+
+              // Met à jour la div 'result'
+              const newResultDiv = doc.querySelector('div.result');
+              const oldResultDiv = document.querySelector('div.result');
+              if (newResultDiv && oldResultDiv) {
+                oldResultDiv.outerHTML = newResultDiv.outerHTML; // Remplace l'élément entier
+              } else if (newResultDiv) {
+                // Si la div de résultat n'existait pas avant, ajoutez-la après le formulaire XML
+                document.querySelector('form#xmlUploadForm').insertAdjacentElement('afterend', newResultDiv);
+              } else if (oldResultDiv) { // Si newResultDiv est null, mais oldResultDiv existait, supprimez l'ancienne
+                oldResultDiv.remove();
+              }
+
+
+              // Met à jour la div 'error' (pour les messages d'erreur XML du contrôleur)
+              const newErrorDiv = doc.querySelector('div.error');
+              const oldErrorDiv = document.querySelector('div.error');
+              if (newErrorDiv && oldErrorDiv) {
+                oldErrorDiv.outerHTML = newErrorDiv.outerHTML;
+              } else if (newErrorDiv) {
+                // Ajoute la nouvelle erreur avant le formulaire XML si elle n'était pas là
+                document.querySelector('form#xmlUploadForm').insertAdjacentElement('beforebegin', newErrorDiv);
+              } else if (oldErrorDiv) { // Si newErrorDiv est null, mais oldErrorDiv existait, supprimez l'ancienne
+                oldErrorDiv.remove();
+              }
+            })
+            .catch(error => {
+              console.error('Erreur lors du traitement XML:', error);
+              // Afficher une erreur générique si le fetch échoue complètement
+              const errorDiv = document.querySelector('div.error');
+              if (errorDiv) {
+                errorDiv.textContent = 'Erreur lors de l\'envoi ou du traitement : ' + error.message;
+              } else {
+                const newError = document.createElement('div');
+                newError.className = 'error';
+                newError.textContent = 'Erreur lors de l\'envoi ou du traitement : ' + error.message;
+                document.querySelector('form#xmlUploadForm').insertAdjacentElement('beforebegin', newError);
+              }
+            });
+  });
+</script>
+</body>
+</html>

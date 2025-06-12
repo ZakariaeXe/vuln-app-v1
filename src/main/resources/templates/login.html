@@ -1,64 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
-        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); max-width: 400px; margin: auto; }
-        h1 { color: #333; text-align: center; }
-        form { display: flex; flex-direction: column; }
-        input[type="text"], input[type="password"], input[type="email"] {
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover { background-color: #0056b3; }
-        .error { color: red; font-weight: bold; text-align: center; margin-top: 10px; }
-        .success { color: green; font-weight: bold; text-align: center; margin-top: 10px; }
-        p { text-align: center; }
-        a { color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-
-        /* Navigation Bar Styles */
-        .navbar {
-            background-color: #333;
-            overflow: hidden;
-            margin-bottom: 20px;
-            border-radius: 8px;
-        }
-        .navbar ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-            display: flex; /* Make links align horizontally */
-            justify-content: center; /* Center the links */
-        }
-        .navbar li {
-            float: left; /* Old way for horizontal list, flexbox is better but float is fine here */
-        }
-        .navbar li a {
-            display: block;
-            color: white;
-            text-align: center;
-            padding: 14px 20px;
-            text-decoration: none;
-        }
-        .navbar li a:hover {
-            background-color: #575757;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 <body>
 <div class="navbar">
@@ -66,62 +11,23 @@
         <li><a th:href="@{/}">Home</a></li>
         <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
         <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
-
-        <li th:if="${session.user != null}">
-            <a th:href="@{'/profile/' + ${session.user.id}}">Profile</a>
-        </li>
-        <li th:if="${session.user != null}">
-            <a th:href="@{/search}">Search Users</a>
-        </li>
-        <li th:if="${session.user != null}">
-            <a th:href="@{/xml-process}">XML Processor</a>
-        </li>
-        <li th:if="${session.user != null}">
-            <a th:href="@{/fetch-url}">URL Fetcher</a>
-        </li>
-        <li th:if="${session.user != null}">
-            <a th:href="@{/logout}">Logout</a>
-        </li>
+        <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a></li>
+        <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
+        <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
+        <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
+        <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
     </ul>
 </div>
 
 <div class="container">
     <h1>Login</h1>
     <form th:action="@{/login}" method="post">
-        Username: <input type="text" name="username"/><br>
-        Password: <input type="password" name="password"/><br>
+        <input type="text" name="username" placeholder="Username" />
+        <input type="password" name="password" placeholder="Password" />
         <button type="submit">Login</button>
-        <p th:if="${error}" class="error" th:text="${error}"></p>
     </form>
-    <p>Don't have an account? <a th:href="@{/register}">Register here</a></p>
+    <div th:if="${error}" class="error" th:text="${error}"></div>
+    <p>Don't have an account? <a th:href="@{/register}">Register here</a>.</p>
 </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>login</title>
-</head>
-<body>
-<form th:action="@{/login}" method="post">
-    Username: <input type="text" name="username"/><br>
-    Password: <input type="password" name="password"/><br>
-    <button type="submit">Login</button>
-    <p th:if="${error}" th:text="${error}"></p>
-</form>
-</body>
-</html>
--->

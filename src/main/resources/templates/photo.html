@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Photo Details</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div class="navbar">
+  <ul>
+    <li><a th:href="@{/}">Home</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
+  </ul>
+</div>
+
+<div class="container">
+  <h1>Photo Details</h1>
+  <div th:if="${error}" class="error" th:text="${error}"></div>
+  <p class="info">Filename: <span th:text="${photo.filename}"></span></p>
+  <p class="description">Description: <span th:utext="${photo.description}"></span></p>
+  <p th:if="${photo.url}" class="info">External URL: <a th:href="${photo.url}" th:text="${photo.url}"></a></p>
+</div>
+</body>
+</html>
