@@ -53,33 +53,6 @@ public class SearchController {
         return "search";
     }
 
-//    @GetMapping("/search-union")
-//    public String searchUnion(
-//            @RequestParam(name = "query", required = false) String q,
-//            Model model,
-//            HttpSession session
-//    ) {
-//        if (session.getAttribute("user") == null) return "redirect:/login";
-//
-//        List<String> rows = new ArrayList<>();
-//        if (q != null && !q.isBlank()) {
-//            String sql = "SELECT id, filename, description, url, owner_id FROM photo WHERE owner_id = "
-//                    + ((User) session.getAttribute("user")).getId()
-//                    + " AND filename LIKE '%" + q + "%' "
-//                    + "UNION SELECT NULL, username, NULL, NULL, NULL FROM user--";
-//
-//            try (Connection c = dataSource.getConnection();
-//                 Statement s = c.createStatement();
-//                 ResultSet rs = s.executeQuery(sql)) {
-//                while (rs.next()) rows.add(rs.getString(2)); // index 2 = filename/username column
-//            } catch (SQLException e) {
-//                model.addAttribute("error", "Union search error: " + e.getMessage());
-//            }
-//        }
-//        model.addAttribute("query", q);
-//        model.addAttribute("rows", rows);
-//        return "search";  // render the same search.html
-//    }
 }
 
     // UNION-based SQLi variant

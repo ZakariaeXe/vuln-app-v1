@@ -33,15 +33,31 @@ public class AuthController {
         return "register";
     }
 
+//    @PostMapping("/register")
+//    public String register(@ModelAttribute User user, Model model) {
+//        // SQLi: concatenated INSERT
+//        String sql = "INSERT INTO user (username,password,email) VALUES ('"
+//                + user.getUsername() + "','"
+//                + user.getPassword() + "','"
+//                + user.getEmail() + "')";
+//        try (Connection c = dataSource.getConnection(); Statement s = c.createStatement()) {
+//            s.executeUpdate(sql);
+//            return "redirect:/login";
+//        } catch (SQLException e) {
+//            model.addAttribute("error", "Registration error: " + e.getMessage());
+//            return "register";
+//        }
+//    }
+
     @PostMapping("/register")
     public String register(@ModelAttribute User user, Model model) {
-        // SQLi: concatenated INSERT
-        String sql = "INSERT INTO user (username,password,email) VALUES ('"
-                + user.getUsername() + "','"
-                + user.getPassword() + "','"
-                + user.getEmail() + "')";
-        try (Connection c = dataSource.getConnection(); Statement s = c.createStatement()) {
-            s.executeUpdate(sql);
+        String sql = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, user.getUsername());
+            ps.setString(2, user.getPassword());
+            ps.setString(3, user.getEmail());
+            ps.executeUpdate();
             return "redirect:/login";
         } catch (SQLException e) {
             model.addAttribute("error", "Registration error: " + e.getMessage());
@@ -54,36 +70,71 @@ public class AuthController {
         return "login";
     }
 
+
     @PostMapping("/login")
     public String login(
             @RequestParam String username,
             @RequestParam String password,
             HttpSession session,
             Model model) {
-        // SQLi: concatenated SELECT
-        String sql = "SELECT id,username,password,email FROM user WHERE username='"
-                + username + "' AND password='" + password + "'";
-        try (Connection c = dataSource.getConnection();
-             Statement s = c.createStatement();
-             ResultSet rs = s.executeQuery(sql)) {
-            if (rs.next()) {
-                User u = new User();
-                u.setId(rs.getLong("id"));
-                u.setUsername(rs.getString("username"));
-                u.setPassword(rs.getString("password"));
-                u.setEmail(rs.getString("email"));
-                session.setAttribute("user", u);
-                // IDOR via profile/{id}
-                return "redirect:/";
-            } else {
-                model.addAttribute("error", "Invalid credentials");
-                return "login";
+        // Secure: use parameterized query
+        String sql = "SELECT id, username, password, email FROM user " +
+                "WHERE username = ? AND password = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, password);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User u = new User();
+                    u.setId(rs.getLong("id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setPassword(rs.getString("password"));
+                    u.setEmail(rs.getString("email"));
+                    session.setAttribute("user", u);
+                    return "redirect:/";  // Login success
+                } else {
+                    model.addAttribute("error", "Invalid credentials");
+                    return "login";
+                }
             }
         } catch (SQLException e) {
             model.addAttribute("error", "Login error: " + e.getMessage());
             return "login";
         }
     }
+// login vulnerable to sqli
+//    @PostMapping("/login")
+//    public String login(
+//            @RequestParam String username,
+//            @RequestParam String password,
+//            HttpSession session,
+//            Model model) {
+//        // SQLi: concatenated SELECT
+//        String sql = "SELECT id,username,password,email FROM user WHERE username='"
+//                + username + "' AND password='" + password + "'";
+//        try (Connection c = dataSource.getConnection();
+//             Statement s = c.createStatement();
+//             ResultSet rs = s.executeQuery(sql)) {
+//            if (rs.next()) {
+//                User u = new User();
+//                u.setId(rs.getLong("id"));
+//                u.setUsername(rs.getString("username"));
+//                u.setPassword(rs.getString("password"));
+//                u.setEmail(rs.getString("email"));
+//                session.setAttribute("user", u);
+//                // IDOR via profile/{id}
+//                return "redirect:/";
+//            } else {
+//                model.addAttribute("error", "Invalid credentials");
+//                return "login";
+//            }
+//        } catch (SQLException e) {
+//            model.addAttribute("error", "Login error: " + e.getMessage());
+//            return "login";
+//        }
+//    }
 
     @GetMapping("/logout")
     public String logout(HttpSession session) {
