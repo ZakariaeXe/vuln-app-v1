@@ -48,11 +48,8 @@
     <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch URL (SSRF)</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{/xml-process}">XML Processor</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{/fetch-url}">URL Fetcher (Old)</a></li> <li th:if="${session.user != null}"><a th:href="@{/echo}">Echo Page (Reflected XSS)</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{/dom-xss}">DOM XSS Page</a></li>
   </ul>
 </div>
 
