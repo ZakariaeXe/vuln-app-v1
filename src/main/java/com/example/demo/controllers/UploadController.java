@@ -34,19 +34,21 @@ public class UploadController {
             @RequestParam("description") String desc,
             @RequestParam(value = "url", required = false) String url,
             HttpSession session,
-            Model model
-    ) {
+            Model model) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
-        // Save file to disk (omitted) and record in DB
-        String sql = "INSERT INTO photo (owner_id,filename,description,url) VALUES ("
-                + u.getId() + ", '"
-                + file.getOriginalFilename() + "', '"
-                + desc + "','"
-                + (url != null ? url : "") + "')";
-        try (Connection c = dataSource.getConnection(); Statement s = c.createStatement()) {
-            s.executeUpdate(sql);
+        String filename = file.getOriginalFilename();
+        String sql = "INSERT INTO photo (owner_id, filename, description, url) VALUES (?, ?, ?, ?)";
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setLong(1, u.getId());
+            ps.setString(2, filename);
+            ps.setString(3, desc);
+            ps.setString(4, url != null ? url : "");
+            ps.executeUpdate();
+
         } catch (SQLException e) {
             model.addAttribute("error", "Upload error: " + e.getMessage());
             return "upload";
@@ -54,28 +56,7 @@ public class UploadController {
         return "redirect:/gallery?userId=" + u.getId();
     }
 
-    //    @PostMapping(value="/upload-xml", consumes="application/xml")
-//    public String uploadXml(
-//            @RequestBody String xml,
-//            HttpSession session,
-//            Model model
-//    ) {
-//        if (session.getAttribute("user") == null) return "redirect:/login";
-//        StringBuilder out = new StringBuilder();
-//        try {
-//            // XXE: vulnerable parser
-//            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-//            DocumentBuilder db = dbf.newDocumentBuilder();
-//            Document doc = db.parse(new InputSource(new StringReader(xml)));
-//            NodeList nl = doc.getElementsByTagName("title");
-//            for (int i=0; i<nl.getLength(); i++) out.append(nl.item(i).getTextContent()).append("<br>");
-//        } catch (Exception e) {
-//            out.append("XML error: ").append(e.getMessage());
-//        }
-//        model.addAttribute("result", out.toString());
-//        return "redirect:/xml-result";
-//    }
-//}
+
     @PostMapping(value="/upload-xml", consumes="application/xml")
     public String uploadXml(
             @RequestBody String xml,
@@ -87,10 +68,26 @@ public class UploadController {
         // SUPPRIMER LES VARIABLES ET PRINTS DE DÉBOGAGE TEMPORAIRES (System.out.println, debugMessage, etc.)
 
         try {
-            // XXE: vulnerable parser
+
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+            // Disable DTDs entirely
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            // Disable external entities
+            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            // Prevent loading external DTDs
+            dbf.setFeature("http://xml.org/sax/features/nonvalidating/load-external-dtd", false);
             DocumentBuilder db = dbf.newDocumentBuilder();
+            // Further lock down entity resolution
+            db.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
+
             Document doc = db.parse(new InputSource(new StringReader(xml)));
+
+            // XXE: vulnerable parser
+//            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+//            DocumentBuilder db = dbf.newDocumentBuilder();
+//            Document doc = db.parse(new InputSource(new StringReader(xml)));
 
             Node rootElement = doc.getDocumentElement();
             if (rootElement != null) {

@@ -23,7 +23,7 @@
   <h1>Photo Details</h1>
   <div th:if="${error}" class="error" th:text="${error}"></div>
   <p class="info">Filename: <span th:text="${photo.filename}"></span></p>
-  <p class="description">Description: <span th:utext="${photo.description}"></span></p>
+  <p class="description">Description: <span th:text="${photo.description}"></span></p>
   <p th:if="${photo.url}" class="info">External URL: <a th:href="${photo.url}" th:text="${photo.url}"></a></p>
 </div>
 </body>
