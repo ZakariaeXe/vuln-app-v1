@@ -16,6 +16,9 @@
         <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
         <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
         <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
+        <li th:if="${session.user != null}">
+            <span class="admin-panel"><a th:href="@{/admin}">Admin Panel</a></span>
+        </li>
     </ul>
 </div>
 
