@@ -64,6 +64,12 @@
         <li th:if="${session.user != null}"><a th:href="@{/xml-process}">XML Processor</a></li>
         <li th:if="${session.user != null}"><a th:href="@{/echo}">Echo Page (Reflected XSS)</a></li>
         <li th:if="${session.user != null}"><a th:href="@{/dom-xss}">DOM XSS Page</a></li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/deserialize}">Insecure deserialisation</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <span class="admin-panel"><a th:href="@{/admin}">Admin Panel</a></span>
+        </li>
     </ul>
 </div>
 

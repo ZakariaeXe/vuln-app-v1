@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div class="navbar">
+    <ul>
+        <li><a th:href="@{/}">Home</a></li>
+        <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
+        <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/upload}">Upload Photo</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/search}">Search Photos</a>
+        </li>
+        <li th:if="${session.user != null}">
+            <a th:href="@{/fetch}">Fetch External URL</a>
+        </li>
+        <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
+
+        <li th:if="${session.user != null}">
+            <span class="admin-panel"><a th:href="@{/admin}">Admin Panel</a></span>
+        </li>
+    </ul>
+</div>
+
+<div class="container">
+    <!-- Display Access Denied message if isAdmin is false (passed from controller) -->
+    <p th:if="${!isAdmin}" class="access-denied-message" th:text="${message}"></p>
+
+    <!-- Display Admin Panel content only if isAdmin is true (passed from controller) -->
+    <div th:if="${isAdmin}">
+        <!-- Use 'user' from the Model, which AdminController sets based on UserSession -->
+        <h1 th:text="'Welcome, Administrator ' + ${user} + '!'"></h1>
+        <p>You have the ability to perform critical actions here.</p>
+        <hr />
+
+        <h2>Admin Actions</h2>
+        <ul>
+            <li><a href="/admin/manage-users">Manage Users</a></li>
+            <li><a href="/admin/view-logs">View System Logs</a></li>
+            <li><a href="/admin/settings">Settings</a></li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>
