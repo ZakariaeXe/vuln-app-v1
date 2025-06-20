@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Client-Side Prototype Pollution Demo</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+
+</head>
+<body>
+<div class="navbar">
+  <ul>
+    <li><a th:href="@{/}">Home</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
+    <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/xml-processor}">XML Processor</a></li>
+    <!-- New Client-Side Prototype Pollution link -->
+    <li th:if="${session.user != null}"><a th:href="@{/prototype-pollution}">Prototype Pollution</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/admin}">Admin Panel</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
+  </ul>
+</div>
+
+<div class="container">
+  <h1>Client-Side Prototype Pollution Demonstration</h1>
+  <p>This page demonstrates a client-side (JavaScript) Prototype Pollution vulnerability. Submit JSON data to see its effect on global object prototypes.</p>
+  <p><strong>Impact:</strong> Can lead to unexpected behavior, property overrides, or even XSS if used in vulnerable contexts.</p>
+
+  <form onsubmit="processJson(event)">
+    <label for="jsonInput">JSON Data:</label>
+    <textarea id="jsonInput" placeholder='{"key":"value"}'></textarea><br>
+    <button type="submit">Process JSON</button>
+  </form>
+
+  <div class="result-box">
+    <h2>Result:</h2>
+    <pre id="jsonOutput"></pre>
+  </div>
+
+  <div id="demonstration-area" data-vulnerable-prop="initial_value_before_pollution">
+    <h4>Demonstration :</h4>
+    <p>This div has a `data-vulnerable-prop` attribute. Prototype Pollution could potentially change its value if the page used a vulnerable framework or function to render it. Try to change this through pollution!</p>
+    <p>Current `data-vulnerable-prop` value: <span id="vulnerable-prop-display"></span></p>
+    <p>Current `({}).testProp` value: <span id="test-prop-display"></span></p>
+  </div>
+</div>
+
+<script>
+  // --- REMEDIATED JAVASCRIPT CODE ---
+
+  // Fixed deep merge/extend function to prevent Prototype Pollution.
+  function safeMerge(target, source) {
+    // Define a list of blacklisted keys that should never be merged
+    // These are critical for prototype pollution.
+    const blacklistedKeys = ['__proto__', 'constructor', 'prototype'];
+
+    for (const key in source) {
+      // 1. Check if property is directly on the source object (standard best practice)
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        // 2. !!! REMEDIATION STEP: Prevent Prototype Pollution !!!
+        // Check if the current key is one of the blacklisted keys.
+        if (blacklistedKeys.includes(key)) {
+          console.warn(`Attempted to merge blacklisted prototype property: ${key}. Blocked.`);
+          continue; // Skip this key to prevent pollution
+        }
+
+        if (typeof target[key] === 'object' && target[key] !== null && typeof source[key] === 'object' && source[key] !== null) {
+          // Recursive merge for objects
+          safeMerge(target[key], source[key]); // Call the safeMerge recursively
+        } else {
+          // Direct assignment for primitives and arrays.
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  }
+
+  function processJson(event) {
+    event.preventDefault();
+
+    const jsonInput = document.getElementById('jsonInput').value;
+    const jsonOutput = document.getElementById('jsonOutput');
+    const vulnerablePropDisplay = document.getElementById('vulnerable-prop-display');
+    const testPropDisplay = document.getElementById('test-prop-display');
+
+
+    try {
+      const data = JSON.parse(jsonInput);
+
+      const initialConfig = {
+        version: '1.0',
+        settings: {
+          theme: 'dark'
+        }
+      };
+
+      // !!! Now use the SAFE merge operation !!!
+      const newConfig = safeMerge(initialConfig, data); // Call safeMerge instead of vulnerableMerge
+
+      jsonOutput.textContent = 'JSON Processed. Merged Config:\n' + JSON.stringify(newConfig, null, 2);
+
+      // --- PROOF OF REMEDIATION ---
+      const newlyCreatedObject = {};
+      console.log('Newly created empty object:', newlyCreatedObject);
+      console.log('Does newlyCreatedObject have "polluted" property?', newlyCreatedObject.hasOwnProperty('polluted'));
+      console.log('Value of newlyCreatedObject.polluted:', newlyCreatedObject.polluted);
+
+      vulnerablePropDisplay.textContent = document.getElementById('demonstration-area').dataset.vulnerableProp;
+      testPropDisplay.textContent = newlyCreatedObject.testProp || 'not found (remediated)';
+
+      console.log("Check global pollution: Object.prototype.polluted =", Object.prototype.polluted);
+
+
+    } catch (e) {
+      jsonOutput.textContent = 'Error processing JSON: ' + e.message;
+      console.error('JSON processing error:', e);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('vulnerable-prop-display').textContent = document.getElementById('demonstration-area').dataset.vulnerableProp;
+    document.getElementById('test-prop-display').textContent = 'not found (initial)';
+  });
+
+</script>
+</body>
+</html>
