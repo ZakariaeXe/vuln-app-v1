@@ -15,10 +15,10 @@
     <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/xml-processor}">XML Processor</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/prototype-pollution}">Prototype Pollution</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/admin}">Admin Panel</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
-    <li th:if="${session.user != null}">
-      <span class="admin-panel"><a th:href="@{/admin}">Admin Panel</a></span>
-    </li>
   </ul>
 </div>
 
@@ -42,57 +42,52 @@
 
 <script>
   document.getElementById('xmlUploadForm').addEventListener('submit', function(event) {
-    event.preventDefault(); // Empêche la soumission de formulaire par défaut du navigateur
+    event.preventDefault();
 
     const xmlData = document.getElementById('xmlContent').value;
-    const url = this.action; // Récupère l'URL d'action du formulaire
+    const url = this.action;
 
     fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/xml' // DÉFINIT L'EN-TÊTE CORRECT POUR SPRING
+        'Content-Type': 'application/xml'
       },
-      body: xmlData // Envoie le contenu brut du textarea comme corps de la requête
+      body: xmlData
     })
             .then(response => {
-              // Le contrôleur renvoie maintenant directement la page 'upload.html'
-              // avec le résultat dans le modèle. Nous allons extraire le HTML et
-              // mettre à jour les divs pertinentes.
-              return response.text(); // Récupère le HTML complet de la page mise à jour
+
+              return response.text();
             })
             .then(html => {
-              // Crée un document DOM temporaire pour extraire les parties mises à jour
+
               const parser = new DOMParser();
               const doc = parser.parseFromString(html, 'text/html');
 
-              // Met à jour la div 'result'
               const newResultDiv = doc.querySelector('div.result');
               const oldResultDiv = document.querySelector('div.result');
               if (newResultDiv && oldResultDiv) {
-                oldResultDiv.outerHTML = newResultDiv.outerHTML; // Remplace l'élément entier
+                oldResultDiv.outerHTML = newResultDiv.outerHTML;
               } else if (newResultDiv) {
-                // Si la div de résultat n'existait pas avant, ajoutez-la après le formulaire XML
+
                 document.querySelector('form#xmlUploadForm').insertAdjacentElement('afterend', newResultDiv);
-              } else if (oldResultDiv) { // Si newResultDiv est null, mais oldResultDiv existait, supprimez l'ancienne
+              } else if (oldResultDiv) {
                 oldResultDiv.remove();
               }
 
 
-              // Met à jour la div 'error' (pour les messages d'erreur XML du contrôleur)
               const newErrorDiv = doc.querySelector('div.error');
               const oldErrorDiv = document.querySelector('div.error');
               if (newErrorDiv && oldErrorDiv) {
                 oldErrorDiv.outerHTML = newErrorDiv.outerHTML;
               } else if (newErrorDiv) {
-                // Ajoute la nouvelle erreur avant le formulaire XML si elle n'était pas là
                 document.querySelector('form#xmlUploadForm').insertAdjacentElement('beforebegin', newErrorDiv);
-              } else if (oldErrorDiv) { // Si newErrorDiv est null, mais oldErrorDiv existait, supprimez l'ancienne
+              } else if (oldErrorDiv) {
                 oldErrorDiv.remove();
               }
             })
             .catch(error => {
               console.error('Erreur lors du traitement XML:', error);
-              // Afficher une erreur générique si le fetch échoue complètement
+
               const errorDiv = document.querySelector('div.error');
               if (errorDiv) {
                 errorDiv.textContent = 'Erreur lors de l\'envoi ou du traitement : ' + error.message;

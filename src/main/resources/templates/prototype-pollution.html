@@ -17,7 +17,6 @@
     <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/xml-processor}">XML Processor</a></li>
-    <!-- New Client-Side Prototype Pollution link -->
     <li th:if="${session.user != null}"><a th:href="@{/prototype-pollution}">Prototype Pollution</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/admin}">Admin Panel</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
@@ -49,19 +48,13 @@
 </div>
 
 <script>
-  // --- REMEDIATED JAVASCRIPT CODE ---
-
-  // Fixed deep merge/extend function to prevent Prototype Pollution.
   function safeMerge(target, source) {
-    // Define a list of blacklisted keys that should never be merged
-    // These are critical for prototype pollution.
+
     const blacklistedKeys = ['__proto__', 'constructor', 'prototype'];
 
     for (const key in source) {
-      // 1. Check if property is directly on the source object (standard best practice)
       if (Object.prototype.hasOwnProperty.call(source, key)) {
-        // 2. !!! REMEDIATION STEP: Prevent Prototype Pollution !!!
-        // Check if the current key is one of the blacklisted keys.
+
         if (blacklistedKeys.includes(key)) {
           console.warn(`Attempted to merge blacklisted prototype property: ${key}. Blocked.`);
           continue; // Skip this key to prevent pollution
@@ -69,9 +62,8 @@
 
         if (typeof target[key] === 'object' && target[key] !== null && typeof source[key] === 'object' && source[key] !== null) {
           // Recursive merge for objects
-          safeMerge(target[key], source[key]); // Call the safeMerge recursively
+          safeMerge(target[key], source[key]);
         } else {
-          // Direct assignment for primitives and arrays.
           target[key] = source[key];
         }
       }
@@ -98,12 +90,10 @@
         }
       };
 
-      // !!! Now use the SAFE merge operation !!!
-      const newConfig = safeMerge(initialConfig, data); // Call safeMerge instead of vulnerableMerge
+      const newConfig = safeMerge(initialConfig, data);
 
       jsonOutput.textContent = 'JSON Processed. Merged Config:\n' + JSON.stringify(newConfig, null, 2);
 
-      // --- PROOF OF REMEDIATION ---
       const newlyCreatedObject = {};
       console.log('Newly created empty object:', newlyCreatedObject);
       console.log('Does newlyCreatedObject have "polluted" property?', newlyCreatedObject.hasOwnProperty('polluted'));

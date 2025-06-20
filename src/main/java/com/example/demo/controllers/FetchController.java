@@ -42,33 +42,26 @@
 //        return "fetch";
 //    }
 //}
-
 package com.example.demo.controllers;
-
-import com.example.demo.models.User;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.http.HttpHeaders;   // Pour les en-têtes HTTP
-import org.springframework.http.HttpStatus;   // Pour les codes de statut HTTP
-import org.springframework.http.MediaType;    // Pour les types de média (image/jpeg, etc.)
-import org.springframework.http.ResponseEntity; // Pour renvoyer des données binaires avec en-têtes
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.*;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.stream.Collectors;
 
 @Controller
 public class FetchController {
     @GetMapping("/fetch")
     public String showForm(HttpSession session, Model model) {
         if (session.getAttribute("user") == null) return "redirect:/login";
-        return "fetch"; // Cette vue affichera les deux formulaires
+        return "fetch";
     }
 
     @GetMapping("/fetch-action")
@@ -83,7 +76,7 @@ public class FetchController {
         try {
             URI uri = new URI(url);
             String host = uri.getHost();
-            // Allow only Medium domains
+
             if (host == null || !host.endsWith("medium.com")) {
                 throw new IllegalArgumentException("URL not allowed: " + host);
             }
@@ -95,7 +88,7 @@ public class FetchController {
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            // Escape HTML to prevent XSS in fetched content
+
             result = response.body().replace("<", "&lt;").replace(">", "&gt;");
         } catch (Exception e) {
             model.addAttribute("error", "Error fetching URL: " + e.getMessage());
@@ -116,7 +109,7 @@ public class FetchController {
         try {
             URI uri = new URI(imageUrl);
             String host = uri.getHost();
-            // Allow only Google image hosts
+
             if (host == null ||
                     !(host.endsWith("google.com") || host.endsWith("gstatic.com"))) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
