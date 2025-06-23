@@ -6,9 +6,9 @@ trigger:
   branches:
     include:
       - vuln-gallery # Or 'master', depending on your default branch name
-  pr:
-    branches:
-      include:
+pr:
+  branches:
+    include:
         - vuln-gallery
 
 # 2. Variables: Define reusable variables for your pipeline.
