@@ -16,7 +16,7 @@ trigger:
 variables:
   # Azure Container Registry (ACR) details
   acrServiceConnection: 'myvulnappacr' # Name of the Service Connection to ACR in Azure DevOps
-  acrRegistry: ' myvulnappacr.azurecr.io' # e.g., 'mydevopsacr.azurecr.io'
+  acrRegistry: 'myvulnappacr.azurecr.io' # e.g., 'mydevopsacr.azurecr.io'
   acrRepository: 'springboot-gallery-app' # Your Docker repository name within ACR (e.g., 'my-app/backend')
 
   # Docker Image Tagging
