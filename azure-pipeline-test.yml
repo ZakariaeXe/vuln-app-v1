@@ -1,0 +1,72 @@
+# azure-pipelines.yml
+
+# 1. Trigger: Define when the CI pipeline should run.
+# This pipeline will run on pushes to the 'main' branch and for pull requests targeting 'main'.
+trigger:
+  branches:
+    include:
+      - vuln-gallery # Or 'master', depending on your default branch name
+  pr:
+    branches:
+      include:
+        - vuln-gallery
+
+# 2. Variables: Define reusable variables for your pipeline.
+#    Remember to replace placeholders with your actual values in Azure DevOps Project Settings.
+variables:
+  # Azure Container Registry (ACR) details
+  acrServiceConnection: 'demo-acr-connection' # Name of the Service Connection to ACR in Azure DevOps
+  acrRegistry: 'youracrname.azurecr.io' # e.g., 'mydevopsacr.azurecr.io'
+  acrRepository: 'springboot-gallery-app' # Your Docker repository name within ACR (e.g., 'my-app/backend')
+
+  # Docker Image Tagging
+  imageTag: '$(Build.BuildId)' # Unique tag for each build (using Azure DevOps's predefined Build ID)
+  fullImageName: '$(acrRegistry)/$(acrRepository):$(imageTag)' # Full image path for internal use
+
+  # Java build settings
+  javaToolVersion: '11' # Must match your application's JDK requirement and Dockerfile base image
+  mavenPomFile: 'pom.xml' # Path to your Maven POM file (assuming it's in the repo root)
+  mavenWrapper: true # Set to true if you use Maven Wrapper (mvnw/mvnw.cmd)
+
+    # 3. Stages: The high-level phases of your pipeline.
+stages:
+  - stage:  BuildApplication
+    displayName: '1. Build App & Docker Image'
+    jobs:
+          - job: BuildAndContainerize
+            displayName: 'Build JAR and Docker Image'
+            pool:
+              vmImage: 'ubuntu-latest'
+
+            steps:
+              - checkout: self
+                clean: true
+                displayName: 'Checkout Source Code'
+
+              - task: JavaToolInstaller@0
+                displayName: 'Install Java JDK $(javaToolVersion)'
+                inputs:
+                  jdkVersion: '$(javaToolVersion)'
+                  jdkArchitecture: 'x64'
+
+              - task: Maven@3 # Task to execute Maven commands (clean, package)
+                displayName: 'Build Spring Boot JAR'
+                inputs:
+                  mavenPomFile: '$(mavenPomFile)' # Reference the global variable here
+                  goals: 'clean package'
+                  publishJUnitResults: true
+                  testResultsFiles: '**/surefire-reports/TEST-*.xml'
+                  mavenWrapper: true # This should be correctly inside 'inputs'
+                continueOnError: false
+
+              - task: Docker@2
+                displayName: 'Build Docker Image'
+                inputs:
+                  containerRegistry: '$(acrServiceConnection)'
+                  repository: '$(acrRepository)'
+                  command: 'build'
+                  Dockerfile: 'Dockerfile'
+                  tags: '$(imageTag)'
+                  buildContext: '$(Build.SourcesDirectory)'
+                condition: succeeded()
+                continueOnError: false
