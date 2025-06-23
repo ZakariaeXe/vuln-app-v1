@@ -15,13 +15,10 @@
         <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
         <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
         <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
+        <li th:if="${session.user != null}"><a th:href="@{/xml-processor}">XML Processor</a></li>
+        <li th:if="${session.user != null}"><a th:href="@{/prototype-pollution}">Prototype Pollution</a></li>
+        <li th:if="${session.user != null}"><a th:href="@{/admin}">Admin Panel</a></li>
         <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
-        <li th:if="${session.user != null}">
-            <a th:href="@{/deserialize}">Insecure deserialisation</a>
-        </li>
-        <li th:if="${session.user != null}">
-            <span class="admin-panel"><a th:href="@{/admin}">Admin Panel</a></span>
-        </li>
     </ul>
 </div>
 
@@ -42,49 +39,3 @@
 </div>
 </body>
 </html>
-
-<!--<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Search Photos</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}" />
-</head>
-<body>
-<div class="navbar">
-    <ul>
-        <li><a th:href="@{/}">Home</a></li>
-        <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
-        <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
-        <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Gallery</a></li>
-        <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload</a></li>
-        <li th:if="${session.user != null}"><a th:href="@{/search}">Search</a></li>
-        <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
-        <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
-    </ul>
-</div>
-
-<div class="container">
-    <h1>Search Photos</h1>
-    <form th:action="@{/search}" method="get">
-        <input type="text" name="query" th:value="${query}" placeholder="Filename contains..." />
-        <button type="submit">Search</button>
-    </form>
-    <div th:if="${error}" class="error" th:text="${error}"></div>
-
-
-    <ul th:if="${results}">
-        <li th:each="photo : ${results}">
-            <a th:href="@{'/photo/' + ${photo.id}}" th:text="${photo.filename}" class="photo-link"></a>
-            <div class="description" th:utext="${photo.description}"></div>
-        </li>
-    </ul>
-
-    <ul th:if="${rows}">
-        <li th:each="r : ${rows}" th:text="${r}"></li>
-    </ul>
-
-</div>
-</body>
-</html>
-
--->

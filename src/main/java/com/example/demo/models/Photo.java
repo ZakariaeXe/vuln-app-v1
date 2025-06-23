@@ -8,15 +8,13 @@ public class Photo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long ownerId;       // maps to column OWNER_ID
+    private Long ownerId;
     private String filename;
-    private String description; // for XSS demos
-    private String url;         // for SSRF demos
+    private String description;
+    private String url;
 
-    // JPA requires a no-arg constructor
     public Photo() { }
 
-    // Getters & setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

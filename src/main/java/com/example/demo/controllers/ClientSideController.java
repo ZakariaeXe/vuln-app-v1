@@ -10,11 +10,10 @@ public class ClientSideController {
 
     @GetMapping("/prototype-pollution")
     public String showPrototypePollutionDemo(HttpSession session, Model model) {
-        // Basic check if a user is "logged in" for consistency
         if (session.getAttribute("user") == null) {
-            return "redirect:/login"; // Redirect if not authenticated
+            return "redirect:/login";
         }
         model.addAttribute("result", "Enter JSON data to demonstrate Prototype Pollution.");
-        return "prototype-pollution"; // Name of the Thymeleaf view
+        return "prototype-pollution";
     }
 }

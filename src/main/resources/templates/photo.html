@@ -15,13 +15,10 @@
     <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/xml-processor}">XML Processor</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/prototype-pollution}">Prototype Pollution</a></li>
+    <li th:if="${session.user != null}"><a th:href="@{/admin}">Admin Panel</a></li>
     <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
-    <li th:if="${session.user != null}">
-      <a th:href="@{/deserialize}">Insecure deserialisation</a>
-    </li>
-    <li th:if="${session.user != null}">
-      <span class="admin-panel"><a th:href="@{/admin}">Admin Panel</a></span>
-    </li>
   </ul>
 </div>
 

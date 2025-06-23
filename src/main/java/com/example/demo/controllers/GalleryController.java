@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ public class GalleryController {
         User cur = (User) session.getAttribute("user");
         if (cur == null) return "redirect:/login";
 
-        // IDOR: no check that userId==cur.getId()
         String sql = "SELECT id,owner_id,filename,description,url FROM photo WHERE owner_id=" + userId;
         List<Photo> photos = new ArrayList<>();
         try (Connection c = dataSource.getConnection(); Statement s = c.createStatement(); ResultSet rs = s.executeQuery(sql)) {
@@ -44,7 +42,7 @@ public class GalleryController {
         }
         model.addAttribute("photos", photos);
         model.addAttribute("ownerId", userId);
-        return "gallery"; // Thymeleaf will render descriptions unescaped via th:utext for XSS
+        return "gallery";
     }
 
     @GetMapping("/photo/{id}")

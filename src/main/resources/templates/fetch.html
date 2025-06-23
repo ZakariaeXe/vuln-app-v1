@@ -1,37 +1,3 @@
-<!--<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <title>Fetch External URL</title>
-  <link rel="stylesheet" th:href="@{/css/style.css}" />
-</head>
-<body>
-<div class="navbar">
-  <ul>
-    <li><a th:href="@{/}">Home</a></li>
-    <li th:if="${session.user == null}"><a th:href="@{/login}">Login</a></li>
-    <li th:if="${session.user == null}"><a th:href="@{/register}">Register</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{'/gallery?userId=' + ${session.user.id}}">My Photos</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{/upload}">Upload Photo</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{/search}">Search Photos</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{/fetch}">Fetch External URL</a></li>
-    <li th:if="${session.user != null}"><a th:href="@{/logout}">Logout</a></li>
-  </ul>
-</div>
-
-<div class="container">
-  <h1>Fetch External URL</h1>
-  <form th:action="@{/fetch-action}" method="get">
-    <input type="text" name="url" th:value="${url}" placeholder="Enter URL..." />
-    <button type="submit">Fetch</button>
-  </form>
-  <div th:if="${error}" class="error" th:text="${error}"></div>
-  <div th:if="${result}" class="result" th:utext="${result}"></div>
-</div>
-</body>
-</html>
-
--->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

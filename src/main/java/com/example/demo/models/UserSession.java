@@ -7,15 +7,13 @@ public class UserSession implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String username;
-    private boolean isAdmin;  // Propriété qu'un attaquant pourrait manipuler
+    private boolean isAdmin;
 
-    // Constructeur
     public UserSession(String username, boolean isAdmin) {
         this.username = username;
         this.isAdmin = isAdmin;
     }
 
-    // Getters et Setters
     public String getUsername() {
         return username;
     }
