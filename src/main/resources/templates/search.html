@@ -32,7 +32,7 @@
     <ul>
         <li th:each="photo : ${results}">
             <a th:href="@{'/photo/' + ${photo.id}}" th:text="${photo.filename}" class="photo-link"></a>
-            <div class="description" th:utext="${photo.description}"></div>
+            <div class="description" th:text="${photo.description}"></div>
         </li>
     </ul>
 
