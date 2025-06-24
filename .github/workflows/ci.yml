@@ -1,5 +1,4 @@
 # .github/workflows/ci-pipeline.yml
-
 # Workflow name, visible in GitHub Actions UI
 name: Spring Boot CI Build & Deploy to GHCR
 
