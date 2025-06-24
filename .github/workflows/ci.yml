@@ -44,7 +44,7 @@ jobs:
         # Run Maven clean install to compile, run tests, and package the JAR
         # '-DskipTests' is REMOVED here, so tests will run.
         # If you want to skip tests here, use 'mvn clean package -DskipTests'
-        run: mvn clean install
+        run: mvn clean install -DskipTests
 
       - name: Set up Docker Buildx (for multi-platform builds - optional but good practice)
         # Uses a Docker action to enable advanced Docker build features
