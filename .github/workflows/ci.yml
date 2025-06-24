@@ -93,11 +93,9 @@ name: Spring Boot CI Build & Deploy to GHCR
 on:
   push:
     branches:
-      - main
       - vuln-gallery
   pull_request:
     branches:
-      - main
       - vuln-gallery
 
 # 2. Jobs: A workflow is composed of one or more jobs.
@@ -117,29 +115,45 @@ jobs:
         uses: actions/checkout@v3
 
       # --- FIX HERE: New step to calculate and export lowercased GHCR path ---
-      - name: Calculate Lowercase GHCR Path
+#      - name: Calculate Lowercase GHCR Path
+#        id: calculate_ghcr_path
+#        run: |
+#          # github.repository_owner (e.g., zakariaXe)
+#          # github.event.repository.name (e.g., demo2)
+#          # Convert owner to lowercase
+#          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+#          REPO_NAME_LOWER=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+#
+#          # Assemble the full GHCR repository path (e.g., zakariaxe/demo2/spring-gallery-app)
+#          FULL_REPO_PATH="ghcr.io/$OWNER_LOWER/$REPO_NAME_LOWER/${{ env.GHCR_APP_IMAGE_NAME }}"
+#
+#          # Export this as an output variable for subsequent steps
+#          echo "Calculated full GHCR image path: $FULL_REPO_PATH"
+#          echo "ghcr_image_path=$FULL_REPO_PATH" >> $GITHUB_OUTPUT
+#        shell: bash
+
+      - name: Calculate lowercase GHCR path
         id: calculate_ghcr_path
         run: |
-          # github.repository_owner (e.g., zakariaXe)
-          # github.event.repository.name (e.g., demo2)
-          # Convert owner to lowercase
-          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          REPO_NAME_LOWER=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          
-          # Assemble the full GHCR repository path (e.g., zakariaxe/demo2/spring-gallery-app)
-          FULL_REPO_PATH="ghcr.io/$OWNER_LOWER/$REPO_NAME_LOWER/${{ env.GHCR_APP_IMAGE_NAME }}"
-          
-          # Export this as an output variable for subsequent steps
-          echo "Calculated full GHCR image path: $FULL_REPO_PATH"
+          FULL_REPO_PATH="ghcr.io/$(echo "${{ github.repository_owner }}/${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')/${{ env.GHCR_APP_IMAGE_NAME }}"
+          echo "Calculated GHCR path: $FULL_REPO_PATH"
           echo "ghcr_image_path=$FULL_REPO_PATH" >> $GITHUB_OUTPUT
-        shell: bash
+
 
       - name: Setup Java JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: 'maven'
+ #         cache: 'maven'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Build with Maven (and Run Tests)
         run: mvn clean install -DskipTests
