@@ -107,7 +107,7 @@ jobs:
 
     # Environment variables common to all steps (no dynamic lowercasing here)
     env:
-      JAVA_VERSION: '24'
+      JAVA_VERSION: '21'
       MAVEN_CACHE_FOLDER: '~/.m2/repository'
       GHCR_APP_IMAGE_NAME: 'spring-gallery-app'
 
