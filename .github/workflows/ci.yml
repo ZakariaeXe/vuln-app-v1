@@ -25,7 +25,7 @@ jobs:
       MAVEN_CACHE_FOLDER: '~/.m2/repository' # Maven cache location on Ubuntu runner
       # GHCR image name (github.repository is automatically org/repo-name)
       # e.g., ghcr.io/your-github-username/your-repo-name
-      GHCR_IMAGE: ghcr.io/${{ github.repository }}/demo2 # Use your chosen app name
+      GHCR_IMAGE: ghcr.io/${{ github.repository }}/spring-gallery-app # Use your chosen app name
 
     # Steps: A sequence of tasks or scripts to execute within the job
     steps:
@@ -60,15 +60,13 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }} # The secret you created
 
       - name: Build Docker Image
-        # Uses a Docker action to build the Docker image
-        # Context is '.' (current directory, repo root)
-        # Tags the image with 'latest' and a unique tag based on the commit SHA
+
         uses: docker/build-push-action@v4
         with:
           context: .
           push: false # We only build here, push happens in next step
           tags: |
-            ${{ env.GHCR_IMAGE }}:${{ github.sha }} # Tag with full commit SHA (unique)
+            ${{ env.GHCR_IMAGE }}:${{ github.sha }} 
             ${{ env.GHCR_IMAGE }}:latest # Tag as 'latest'
 
       - name: Push Docker Image to GHCR
