@@ -1,3 +1,92 @@
+## .github/workflows/ci-pipeline.yml
+#
+## Workflow name, visible in GitHub Actions UI
+#name: Spring Boot CI Build & Deploy to GHCR
+#
+## 1. Triggers: Define when this workflow should run
+#on:
+#  push:
+#    branches:
+#      - vuln-gallery # Also trigger on pushes to your 'vuln-gallery' branch
+#  pull_request:
+#    branches:
+#      - vuln-gallery
+#
+## 2. Jobs: A workflow is composed of one or more jobs.
+#jobs:
+#  build-test-push-pull:
+#    # Specify the runner environment (GitHub-hosted agent)
+#    runs-on: ubuntu-latest # Recommended for Java and Linux Docker builds
+#
+#    # Environment variables specific to this job
+#    env:
+#      # These variables will be available to all steps in this job
+#      JAVA_VERSION: '24' # Matches your Dockerfile and application's JDK
+#      MAVEN_CACHE_FOLDER: '~/.m2/repository' # Maven cache location on Ubuntu runner
+#      # GHCR image name (github.repository is automatically org/repo-name)
+#      # e.g., ghcr.io/your-github-username/your-repo-name
+#      GHCR_IMAGE: ghcr.io/${{ github.repository }}/spring-gallery-app # Use your chosen app name
+#
+#    # Steps: A sequence of tasks or scripts to execute within the job
+#    steps:
+#      - name: Checkout Code
+#        # Uses the official action to check out your repository code
+#        uses: actions/checkout@v3
+#
+#      - name: Setup Java JDK ${{ env.JAVA_VERSION }}
+#        # Uses the official action to install the specified JDK
+#        uses: actions/setup-java@v3
+#        with:
+#          java-version: ${{ env.JAVA_VERSION }}
+#          distribution: 'temurin' # A common and reliable JDK distribution
+#          cache: 'maven' # Caches Maven dependencies to speed up builds
+#
+#      - name: Build with Maven (and Run Tests)
+#        # Run Maven clean install to compile, run tests, and package the JAR
+#        # '-DskipTests' is REMOVED here, so tests will run.
+#        # If you want to skip tests here, use 'mvn clean package -DskipTests'
+#        run: mvn clean install -DskipTests
+#
+#      - name: Set up Docker Buildx (for multi-platform builds - optional but good practice)
+#        # Uses a Docker action to enable advanced Docker build features
+#        uses: docker/setup-buildx-action@v2
+#
+#      - name: Log in to GitHub Container Registry (GHCR)
+#        # Uses a Docker action to authenticate with GHCR using your PAT
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }} # Uses the GitHub user who triggered the workflow
+#          password: ${{ secrets.GHCR_TOKEN }} # The secret you created
+#
+#      - name: Build Docker Image
+#
+#        uses: docker/build-push-action@v4
+#        with:
+#          context: .
+#          push: false # We only build here, push happens in next step
+#          tags: |
+#            ${{ env.GHCR_IMAGE }}:${{ github.sha }}
+#            ${{ env.GHCR_IMAGE }}:latest # Tag as 'latest'
+#
+#      - name: Push Docker Image to GHCR
+#        # Uses a Docker action to push the previously built image
+#        uses: docker/build-push-action@v4
+#        with:
+#          context: .
+#          push: true # Explicitly push the image
+#          tags: |
+#            ${{ env.GHCR_IMAGE }}:${{ github.sha }}
+#            ${{ env.GHCR_IMAGE }}:latest
+#
+#      - name: Pull Docker Image from GHCR (for verification)
+#        # Use a script step to perform a 'docker pull'
+#        # This confirms the image was pushed correctly and is pullable
+#        run: |
+#          echo "Attempting to pull image ${{ env.GHCR_IMAGE }}:latest from GHCR..."
+#          docker pull ${{ env.GHCR_IMAGE }}:latest
+#          echo "Image pull successful!"
+
 # .github/workflows/ci-pipeline.yml
 
 # Workflow name, visible in GitHub Actions UI
@@ -7,82 +96,87 @@ name: Spring Boot CI Build & Deploy to GHCR
 on:
   push:
     branches:
-      - vuln-gallery # Also trigger on pushes to your 'vuln-gallery' branch
+      - main
+      - vuln-gallery
   pull_request:
     branches:
+      - main
       - vuln-gallery
 
 # 2. Jobs: A workflow is composed of one or more jobs.
 jobs:
   build-test-push-pull:
-    # Specify the runner environment (GitHub-hosted agent)
-    runs-on: ubuntu-latest # Recommended for Java and Linux Docker builds
+    runs-on: ubuntu-latest
 
-    # Environment variables specific to this job
+    # Environment variables common to all steps (no dynamic lowercasing here)
     env:
-      # These variables will be available to all steps in this job
       JAVA_VERSION: '24' # Matches your Dockerfile and application's JDK
-      MAVEN_CACHE_FOLDER: '~/.m2/repository' # Maven cache location on Ubuntu runner
-      # GHCR image name (github.repository is automatically org/repo-name)
-      # e.g., ghcr.io/your-github-username/your-repo-name
-      GHCR_IMAGE: ghcr.io/${{ github.repository }}/spring-gallery-app # Use your chosen app name
+      MAVEN_CACHE_FOLDER: '~/.m2/repository'
+      GHCR_APP_IMAGE_NAME: 'spring-gallery-app'
 
     # Steps: A sequence of tasks or scripts to execute within the job
     steps:
       - name: Checkout Code
-        # Uses the official action to check out your repository code
         uses: actions/checkout@v3
 
+      # --- FIX HERE: New step to calculate and export lowercased GHCR path ---
+      - name: Calculate Lowercase GHCR Path
+        id: calculate_ghcr_path
+        run: |
+          # github.repository_owner (e.g., zakariaXe)
+          # github.event.repository.name (e.g., demo2)
+          # Convert owner to lowercase
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME_LOWER=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          
+          # Assemble the full GHCR repository path (e.g., zakariaxe/demo2/spring-gallery-app)
+          FULL_REPO_PATH="ghcr.io/$OWNER_LOWER/$REPO_NAME_LOWER/${{ env.GHCR_APP_IMAGE_NAME }}"
+          
+          # Export this as an output variable for subsequent steps
+          echo "Calculated full GHCR image path: $FULL_REPO_PATH"
+          echo "ghcr_image_path=$FULL_REPO_PATH" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Setup Java JDK ${{ env.JAVA_VERSION }}
-        # Uses the official action to install the specified JDK
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin' # A common and reliable JDK distribution
-          cache: 'maven' # Caches Maven dependencies to speed up builds
+          distribution: 'temurin'
+          cache: 'maven'
 
       - name: Build with Maven (and Run Tests)
-        # Run Maven clean install to compile, run tests, and package the JAR
-        # '-DskipTests' is REMOVED here, so tests will run.
-        # If you want to skip tests here, use 'mvn clean package -DskipTests'
-        run: mvn clean install -DskipTests
+        run: mvn clean install
 
-      - name: Set up Docker Buildx (for multi-platform builds - optional but good practice)
-        # Uses a Docker action to enable advanced Docker build features
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Log in to GitHub Container Registry (GHCR)
-        # Uses a Docker action to authenticate with GHCR using your PAT
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }} # Uses the GitHub user who triggered the workflow
-          password: ${{ secrets.GHCR_TOKEN }} # The secret you created
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
       - name: Build Docker Image
-
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: false # We only build here, push happens in next step
+          push: false
           tags: |
-            ${{ env.GHCR_IMAGE }}:${{ github.sha }} 
-            ${{ env.GHCR_IMAGE }}:latest # Tag as 'latest'
+            ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:${{ github.sha }} # Use output from previous step
+            ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:latest
 
       - name: Push Docker Image to GHCR
-        # Uses a Docker action to push the previously built image
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: true # Explicitly push the image
+          push: true
           tags: |
-            ${{ env.GHCR_IMAGE }}:${{ github.sha }}
-            ${{ env.GHCR_IMAGE }}:latest
+            ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:${{ github.sha }}
+            ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:latest
 
       - name: Pull Docker Image from GHCR (for verification)
-        # Use a script step to perform a 'docker pull'
-        # This confirms the image was pushed correctly and is pullable
         run: |
-          echo "Attempting to pull image ${{ env.GHCR_IMAGE }}:latest from GHCR..."
-          docker pull ${{ env.GHCR_IMAGE }}:latest
+          echo "Attempting to pull image ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:latest from GHCR..."
+          docker pull ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:latest
           echo "Image pull successful!"
