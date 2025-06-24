@@ -1,5 +1,23 @@
 # Use a Java base image
 FROM openjdk:24-jdk-slim as builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Define Maven version (you can customize)
+ARG MAVEN_VERSION=3.8.8
+ARG BASE_URL=https://apache.osuosl.org/maven/maven-3/${MAVEN_VERSION}/binaries
+
+# Download and install Maven
+RUN curl -fsSL ${BASE_URL}/apache-maven-${MAVEN_VERSION}-bin.zip -o /tmp/apache-maven.zip \
+    && unzip /tmp/apache-maven.zip -d /opt/ \
+    && rm /tmp/apache-maven.zip \
+    && mv /opt/apache-maven-${MAVEN_VERSION} /opt/maven
+
+# Set Maven environment variables
+ENV M2_HOME /opt/maven
+ENV PATH ${M2_HOME}/bin:${PATH}
 
 # Set working directory
 WORKDIR /app
