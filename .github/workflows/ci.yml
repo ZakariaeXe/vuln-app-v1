@@ -86,9 +86,6 @@
 #          echo "Attempting to pull image ${{ env.GHCR_IMAGE }}:latest from GHCR..."
 #          docker pull ${{ env.GHCR_IMAGE }}:latest
 #          echo "Image pull successful!"
-
-# .github/workflows/ci-pipeline.yml
-
 # Workflow name, visible in GitHub Actions UI
 name: Spring Boot CI Build & Deploy to GHCR
 
