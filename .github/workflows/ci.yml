@@ -107,7 +107,7 @@ jobs:
 
     # Environment variables common to all steps (no dynamic lowercasing here)
     env:
-      JAVA_VERSION: '24' # Matches your Dockerfile and application's JDK
+      JAVA_VERSION: '24'
       MAVEN_CACHE_FOLDER: '~/.m2/repository'
       GHCR_APP_IMAGE_NAME: 'spring-gallery-app'
 
@@ -160,7 +160,7 @@ jobs:
           context: .
           push: false
           tags: |
-            ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:${{ github.sha }} # Use output from previous step
+            ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:${{ github.sha }} 
             ${{ steps.calculate_ghcr_path.outputs.ghcr_image_path }}:latest
 
       - name: Push Docker Image to GHCR
