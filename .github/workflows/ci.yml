@@ -20,7 +20,7 @@ jobs:
     # Environment variables specific to this job
     env:
       # These variables will be available to all steps in this job
-      JAVA_VERSION: '21' # Matches your Dockerfile and application's JDK
+      JAVA_VERSION: '24' # Matches your Dockerfile and application's JDK
       MAVEN_CACHE_FOLDER: '~/.m2/repository' # Maven cache location on Ubuntu runner
       # GHCR image name (github.repository is automatically org/repo-name)
       # e.g., ghcr.io/your-github-username/your-repo-name
