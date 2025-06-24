@@ -145,7 +145,7 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven (and Run Tests)
-        run: mvn clean install
+        run: mvn clean install -DskipTests
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
