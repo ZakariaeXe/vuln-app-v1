@@ -1,0 +1,90 @@
+# .github/workflows/ci-pipeline.yml
+
+# Workflow name, visible in GitHub Actions UI
+name: Spring Boot CI Build & Deploy to GHCR
+
+# 1. Triggers: Define when this workflow should run
+on:
+  push:
+    branches:
+      - vuln-gallery # Also trigger on pushes to your 'vuln-gallery' branch
+  pull_request:
+    branches:
+      - vuln-gallery
+
+# 2. Jobs: A workflow is composed of one or more jobs.
+jobs:
+  build-test-push-pull:
+    # Specify the runner environment (GitHub-hosted agent)
+    runs-on: ubuntu-latest # Recommended for Java and Linux Docker builds
+
+    # Environment variables specific to this job
+    env:
+      # These variables will be available to all steps in this job
+      JAVA_VERSION: '11' # Matches your Dockerfile and application's JDK
+      MAVEN_CACHE_FOLDER: '~/.m2/repository' # Maven cache location on Ubuntu runner
+      # GHCR image name (github.repository is automatically org/repo-name)
+      # e.g., ghcr.io/your-github-username/your-repo-name
+      GHCR_IMAGE: ghcr.io/${{ github.repository }}/spring-gallery-app # Use your chosen app name
+
+    # Steps: A sequence of tasks or scripts to execute within the job
+    steps:
+      - name: Checkout Code
+        # Uses the official action to check out your repository code
+        uses: actions/checkout@v3
+
+      - name: Setup Java JDK ${{ env.JAVA_VERSION }}
+        # Uses the official action to install the specified JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin' # A common and reliable JDK distribution
+          cache: 'maven' # Caches Maven dependencies to speed up builds
+
+      - name: Build with Maven (and Run Tests)
+        # Run Maven clean install to compile, run tests, and package the JAR
+        # '-DskipTests' is REMOVED here, so tests will run.
+        # If you want to skip tests here, use 'mvn clean package -DskipTests'
+        run: mvn clean install
+
+      - name: Set up Docker Buildx (for multi-platform builds - optional but good practice)
+        # Uses a Docker action to enable advanced Docker build features
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        # Uses a Docker action to authenticate with GHCR using your PAT
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }} # Uses the GitHub user who triggered the workflow
+          password: ${{ secrets.GHCR_TOKEN }} # The secret you created
+
+      - name: Build Docker Image
+        # Uses a Docker action to build the Docker image
+        # Context is '.' (current directory, repo root)
+        # Tags the image with 'latest' and a unique tag based on the commit SHA
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false # We only build here, push happens in next step
+          tags: |
+            ${{ env.GHCR_IMAGE }}:${{ github.sha }} # Tag with full commit SHA (unique)
+            ${{ env.GHCR_IMAGE }}:latest # Tag as 'latest'
+
+      - name: Push Docker Image to GHCR
+        # Uses a Docker action to push the previously built image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true # Explicitly push the image
+          tags: |
+            ${{ env.GHCR_IMAGE }}:${{ github.sha }}
+            ${{ env.GHCR_IMAGE }}:latest
+
+      - name: Pull Docker Image from GHCR (for verification)
+        # Use a script step to perform a 'docker pull'
+        # This confirms the image was pushed correctly and is pullable
+        run: |
+          echo "Attempting to pull image ${{ env.GHCR_IMAGE }}:latest from GHCR..."
+          docker pull ${{ env.GHCR_IMAGE }}:latest
+          echo "Image pull successful!"
