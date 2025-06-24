@@ -25,7 +25,7 @@ jobs:
       MAVEN_CACHE_FOLDER: '~/.m2/repository' # Maven cache location on Ubuntu runner
       # GHCR image name (github.repository is automatically org/repo-name)
       # e.g., ghcr.io/your-github-username/your-repo-name
-      GHCR_IMAGE: ghcr.io/${{ github.repository }}/spring-gallery-app # Use your chosen app name
+      GHCR_IMAGE: ghcr.io/${{ github.repository }}/demo2 # Use your chosen app name
 
     # Steps: A sequence of tasks or scripts to execute within the job
     steps:

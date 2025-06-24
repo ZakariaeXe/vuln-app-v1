@@ -1,5 +1,5 @@
 # Use a Java base image
-FROM openjdk:11-jdk-slim as builder
+FROM openjdk:24-jdk-slim as builder
 
 # Set working directory
 WORKDIR /app
