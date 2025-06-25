@@ -23,33 +23,42 @@ jobs:
 
     # Steps: A sequence of tasks or scripts to execute within the job
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        
-      - name: Decode Checkmarx Password
-        run: |
-          echo "${{ secrets.CHECKMARX_PASSWORD }}" | base64 -d > password.txt
-          CHECKMARX_PASSWORD=$(cat password.txt)
-          echo "CHECKMARX_PASSWORD=$CHECKMARX_PASSWORD" >> $GITHUB_ENV
+#      - name: Checkout Code
+#        uses: actions/checkout@v3
+#
+#      - name: Decode Checkmarx Password
+#        run: |
+#          echo "${{ secrets.CHECKMARX_PASSWORD }}" | base64 -d > password.txt
+#          CHECKMARX_PASSWORD=$(cat password.txt)
+#          echo "CHECKMARX_PASSWORD=$CHECKMARX_PASSWORD" >> $GITHUB_ENV
 
-      - name: Checkmarx SAST Scan
-        uses: checkmarx-ts/checkmarx-cxflow-github-action@v1.6
-        with:
-          project: ${{ secrets.CHECKMARX_PROJECT }}
-          checkmarx_url: ${{ secrets.CHECKMARX_URL }}
-          checkmarx_username: ${{ secrets.CHECKMARX_USER }}
-          checkmarx_password: ${{ env.CHECKMARX_PASSWORD }}
-          checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
-          scanners: sast
-          bug_tracker: Sarif
-          break_build: false
-          params: --namespace=${{ github.repository_owner }} --repo-name=${{ github.event.repository.name }} --branch=${{ github.ref_name }} --checkmarx.disable-clubbing=true --exclude-paths=.git,.github,target,logs
+#      - name: Checkmarx SAST Scan
+#        uses: checkmarx-ts/checkmarx-cxflow-github-action@v1.6
+#        with:
+#          project: ${{ secrets.CHECKMARX_PROJECT }}
+#          checkmarx_url: ${{ secrets.CHECKMARX_URL }}
+#          checkmarx_username: ${{ secrets.CHECKMARX_USER }}
+#          checkmarx_password: ${{ env.CHECKMARX_PASSWORD }}
+#          checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+#          scanners: sast
+#          bug_tracker: Sarif
+#          break_build: false
+#          params: --namespace=${{ github.repository_owner }} --repo-name=${{ github.event.repository.name }} --branch=${{ github.ref_name }} --checkmarx.disable-clubbing=true --exclude-paths=.git,.github,target,logs
 
-      - name: Upload SARIF file for SAST
-        uses: github/codeql-action/upload-sarif@v2
+#      - name: Upload SARIF file for SAST
+#        uses: github/codeql-action/upload-sarif@v2
+#        with:
+#          sarif_file: cx.sarif
+#          category: sast
+
+      - name: Checkmarx AST CLI Action
+        uses: checkmarx/ast-github-action@main
         with:
-          sarif_file: cx.sarif
-          category: sast
+          base_uri: https://ast.checkmarx.net/
+          cx_tenant: devoteam
+          cx_client_id: ${{ secrets.CHECKMARX_CLIENT_ID }}
+          cx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+          source_dir: "path-to-scan" (dafault is ".")
 
       - name: Calculate lowercase GHCR path
         id: calculate_ghcr_path
