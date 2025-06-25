@@ -26,11 +26,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
         
-      - name: Decode Checkmarx Password
-        run: |
-          echo "${{ secrets.CHECKMARX_PASSWORD }}" | base64 -d > password.txt
-          CHECKMARX_PASSWORD=$(cat password.txt)
-          echo "CHECKMARX_PASSWORD=$CHECKMARX_PASSWORD" >> $GITHUB_ENV
 
       - name: Checkmarx SAST Scan
         uses: checkmarx-ts/checkmarx-cxflow-github-action@v1.6
@@ -38,11 +33,11 @@ jobs:
           project: ${{ secrets.CHECKMARX_PROJECT }}
           checkmarx_url: ${{ secrets.CHECKMARX_URL }}
           checkmarx_username: ${{ secrets.CHECKMARX_USER }}
-          checkmarx_password: ${{ env.CHECKMARX_PASSWORD }}
+          checkmarx_password: '${{ secrets.CHECKMARX_PASSWORD }}'
           checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
           scanners: sast
           bug_tracker: Sarif
-          break_build: false
+          break_build: falseMore actions
           params: --namespace=${{ github.repository_owner }} --repo-name=${{ github.event.repository.name }} --branch=${{ github.ref_name }} --checkmarx.disable-clubbing=true --exclude-paths=.git,.github,target,logs
 
       - name: Upload SARIF file for SAST
