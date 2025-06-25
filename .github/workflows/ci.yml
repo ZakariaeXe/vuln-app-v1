@@ -19,6 +19,8 @@ jobs:
       JAVA_VERSION: '21'
       MAVEN_CACHE_FOLDER: '~/.m2/repository'
       GHCR_APP_IMAGE_NAME: 'spring-gallery-app'
+      CX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
+
 
     # Steps: A sequence of tasks or scripts to execute within the job
     steps:
@@ -31,7 +33,7 @@ jobs:
           project: ${{ secrets.CHECKMARX_PROJECT }}
           checkmarx_url: ${{ secrets.CHECKMARX_URL }}
           checkmarx_username: ${{ secrets.CHECKMARX_USER }}
-          checkmarx_password: ${{ secrets.CHECKMARX_PASSWORD }}
+          checkmarx_password: ${{ env.CX_PASSWORD }}
           checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
           scanners: sast
           bug_tracker: Sarif
