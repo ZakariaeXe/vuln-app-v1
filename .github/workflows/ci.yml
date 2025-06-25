@@ -19,13 +19,18 @@ jobs:
       JAVA_VERSION: '21'
       MAVEN_CACHE_FOLDER: '~/.m2/repository'
       GHCR_APP_IMAGE_NAME: 'spring-gallery-app'
-      CX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
 
 
     # Steps: A sequence of tasks or scripts to execute within the job
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        
+      - name: Decode Checkmarx Password
+        run: |
+          echo "${{ secrets.CHECKMARX_PASSWORD }}" | base64 -d > password.txt
+          CHECKMARX_PASSWORD=$(cat password.txt)
+          echo "CHECKMARX_PASSWORD=$CHECKMARX_PASSWORD" >> $GITHUB_ENV
 
       - name: Checkmarx SAST Scan
         uses: checkmarx-ts/checkmarx-cxflow-github-action@v1.6
@@ -33,7 +38,7 @@ jobs:
           project: ${{ secrets.CHECKMARX_PROJECT }}
           checkmarx_url: ${{ secrets.CHECKMARX_URL }}
           checkmarx_username: ${{ secrets.CHECKMARX_USER }}
-          checkmarx_password: ${{ env.CX_PASSWORD }}
+          checkmarx_password: ${{ env.CHECKMARX_PASSWORD }}
           checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
           scanners: sast
           bug_tracker: Sarif
