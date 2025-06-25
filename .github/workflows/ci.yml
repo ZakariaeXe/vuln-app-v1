@@ -32,7 +32,6 @@ jobs:
           checkmarx_url: ${{ secrets.CHECKMARX_URL }}
           checkmarx_username: ${{ secrets.CHECKMARX_USER }}
           checkmarx_password: ${{ secrets.CHECKMARX_PASSWORD }}
-          checkmarx_client_id: ${{ secrets.CHECKMARX_CLIENT_ID }}       
           checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
           scanners: sast
           bug_tracker: Sarif
