@@ -9,7 +9,6 @@ on:
     branches:
       - vuln-gallery
 
-# 2. Jobs: A workflow is composed of one or more jobs.
 jobs:
   build-test-push-pull:
     runs-on: ubuntu-latest
