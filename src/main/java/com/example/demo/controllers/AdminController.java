@@ -43,7 +43,7 @@ public class AdminController {
                 }
             }
         }
-
+#just triggering codeql 
 
         model.addAttribute("user", usernameFromCookie);
         model.addAttribute("isAdmin", isAdminFromCookie);
